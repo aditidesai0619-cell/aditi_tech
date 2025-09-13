@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyForge - Personalized Study Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .progress-ring { transform: rotate(-90deg); }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .mastery-low { background: linear-gradient(45deg, #ff6b6b, #ff8e8e); }
+        .mastery-medium { background: linear-gradient(45deg, #ffd93d, #ffed4e); }
+        .mastery-high { background: linear-gradient(45deg, #6bcf7f, #4ecdc4); }
+        .timer-ring { stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 1s linear; }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Navigation -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <i class="fas fa-graduation-cap text-2xl mr-3"></i>
+                    <span class="text-xl font-bold">StudyForge</span>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <button onclick="showSection('dashboard')" class="nav-btn hover:text-blue-200 transition-colors">Dashboard</button>
+                    <button onclick="showSection('upload')" class="nav-btn hover:text-blue-200 transition-colors">Upload</button>
+                    <button onclick="showSection('practice')" class="nav-btn hover:text-blue-200 transition-colors">Practice</button>
+                    <button onclick="showSection('analytics')" class="nav-btn hover:text-blue-200 transition-colors">Analytics</button>
+                    <button onclick="showSection('timer')" class="nav-btn hover:text-blue-200 transition-colors">Timer</button>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm">Welcome, Student</span>
+                    <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-sm"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section active">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Study Dashboard</h1>
+                <p class="text-gray-600">Track your learning progress and get personalized recommendations</p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                            <i class="fas fa-book text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Documents</p>
+                            <p class="text-2xl font-bold text-gray-900" id="doc-count">12</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-600">
+                            <i class="fas fa-brain text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Mastery Score</p>
+                            <p class="text-2xl font-bold text-gray-900" id="mastery-score">78%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                            <i class="fas fa-clock text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Study Time</p>
+                            <p class="text-2xl font-bold text-gray-900" id="study-time">24h</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6 card-hover">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                            <i class="fas fa-target text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Streak</p>
+                            <p class="text-2xl font-bold text-gray-900" id="streak">7 days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mastery Heatmap -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Topic Mastery</h3>
+                    <div class="space-y-4" id="mastery-topics">
+                        <!-- Topics will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Progress Chart -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Learning Progress</h3>
+                    <canvas id="progressChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Recommended Study Activities</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="recommendations">
+                    <!-- Recommendations will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Section -->
+    <div id="upload" class="section">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Upload Documents</h1>
+                <p class="text-gray-600">Upload your study materials and let AI extract key concepts</p>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="bg-white rounded-lg shadow-md p-8 mb-8">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-lg font-medium text-gray-700 mb-2">Drop files here or click to browse</p>
+                    <p class="text-sm text-gray-500 mb-4">Supports PDF, DOCX, PPTX, TXT, and images</p>
+                    <input type="file" id="file-input" multiple accept=".pdf,.docx,.pptx,.txt,.jpg,.jpeg,.png" class="hidden">
+                    <button onclick="document.getElementById('file-input').click()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        Choose Files
+                    </button>
+                </div>
+            </div>
+
+            <!-- Course Organization -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h3 class="text-lg font-semibold mb-4">Course Organization</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Course Name</label>
+                        <input type="text" id="course-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Computer Science 101">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Topic/Chapter</label>
+                        <input type="text" id="topic-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Data Structures">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Status -->
+            <div id="processing-status" class="bg-white rounded-lg shadow-md p-6 hidden">
+                <h3 class="text-lg font-semibold mb-4">Processing Documents</h3>
+                <div class="space-y-4" id="processing-list">
+                    <!-- Processing items will be added here -->
+                </div>
+            </div>
+
+            <!-- Uploaded Files -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Uploaded Documents</h3>
+                <div class="space-y-3" id="uploaded-files">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                            <div>
+                                <p class="font-medium">Introduction to Algorithms.pdf</p>
+                                <p class="text-sm text-gray-500">Computer Science 101 • 2.3 MB • Processed</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Ready</span>
+                            <button class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practice Section -->
+    <div id="practice" class="section">
+        <div class="max-w-4xl mx-auto px-4 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Adaptive Practice</h1>
+                <p class="text-gray-600">Personalized study sessions based on your mastery level</p>
+            </div>
+
+            <!-- Practice Mode Selection -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-8" id="practice-modes">
+                <h3 class="text-lg font-semibold mb-4">Choose Practice Mode</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="startPractice('flashcards')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all">
+                        <i class="fas fa-layer-group text-2xl text-blue-600 mb-2"></i>
+                        <h4 class="font-semibold">Flashcards</h4>
+                        <p class="text-sm text-gray-600">Quick concept review</p>
+                    </button>
+                    <button onclick="startPractice('mcq')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all">
+                        <i class="fas fa-list-ul text-2xl text-green-600 mb-2"></i>
+                        <h4 class="font-semibold">Multiple Choice</h4>
+                        <p class="text-sm text-gray-600">Test your knowledge</p>
+                    </button>
+                    <button onclick="startPractice('adaptive')" class="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all">
+                        <i class="fas fa-brain text-2xl text-purple-600 mb-2"></i>
+                        <h4 class="font-semibold">Adaptive Mix</h4>
+                        <p class="text-sm text-gray-600">AI-powered session</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Practice Session -->
+            <div id="practice-session" class="bg-white rounded-lg shadow-md p-8 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold" id="session-title">Flashcard Practice</h3>
+                        <p class="text-sm text-gray-600" id="session-progress">Question 1 of 10</p>
+                    </div>
+                    <button onclick="endPractice()" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Question Content -->
+                <div id="question-content" class="mb-8">
+                    <!-- Question will be populated by JavaScript -->
+                </div>
+
+                <!-- Answer Options -->
+                <div id="answer-options" class="space-y-3 mb-6">
+                    <!-- Options will be populated by JavaScript -->
+                </div>
+
+                <!-- Navigation -->
+                <div class="flex justify-between items-center">
+                    <button id="prev-btn" onclick="previousQuestion()" class="px-4 py-2 text-gray-600 hover:text-gray-800 disabled:opacity-50" disabled>
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </button>
+                    <div class="flex space-x-2">
+                        <button onclick="markForReview()" class="px-4 py-2 bg-yellow-100 text-yellow-800 rounded-lg hover:bg-yellow-200">
+                            <i class="fas fa-flag mr-2"></i>Mark for Review
+                        </button>
+                        <button id="next-btn" onclick="nextQuestion()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Next<i class="fas fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practice Results -->
+            <div id="practice-results" class="bg-white rounded-lg shadow-md p-8 hidden">
+                <div class="text-center mb-6">
+                    <i class="fas fa-trophy text-4xl text-yellow-500 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Session Complete!</h3>
+                    <p class="text-gray-600">Great job on your practice session</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600" id="correct-answers">8</div>
+                        <div class="text-sm text-gray-600">Correct</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-red-600" id="incorrect-answers">2</div>
+                        <div class="text-sm text-gray-600">Incorrect</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600" id="accuracy-score">80%</div>
+                        <div class="text-sm text-gray-600">Accuracy</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center space-x-4">
+                    <button onclick="reviewMistakes()" class="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700">
+                        Review Mistakes
+                    </button>
+                    <button onclick="startNewSession()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        New Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div id="analytics" class="section">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Learning Analytics</h1>
+                <p class="text-gray-600">Detailed insights into your learning progress and performance</p>
+            </div>
+
+            <!-- Analytics Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Performance Trends</h3>
+                    <canvas id="performanceChart" width="400" height="200"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Time Distribution</h3>
+                    <canvas id="timeChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Analytics -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Weak Concepts</h3>
+                    <div class="space-y-4" id="weak-concepts">
+                        <!-- Weak concepts will be populated by JavaScript -->
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-4">Study Recommendations</h3>
+                    <div class="space-y-3" id="study-recommendations">
+                        <!-- Recommendations will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pomodoro Timer Section -->
+    <div id="timer" class="section">
+        <div class="max-w-2xl mx-auto px-4 py-8">
+            <div class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Pomodoro Timer</h1>
+                <p class="text-gray-600">Stay focused with timed study sessions</p>
+            </div>
+
+            <!-- Timer Display -->
+            <div class="bg-white rounded-lg shadow-md p-8 text-center mb-8">
+                <div class="relative inline-block mb-6">
+                    <svg class="w-64 h-64 transform -rotate-90">
+                        <circle cx="128" cy="128" r="120" stroke="#e5e7eb" stroke-width="8" fill="none"></circle>
+                        <circle id="timer-progress" cx="128" cy="128" r="120" stroke="#3b82f6" stroke-width="8" fill="none" 
+                                class="timer-ring" stroke-linecap="round"></circle>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <div id="timer-display" class="text-4xl font-bold text-gray-900 mb-2">25:00</div>
+                            <div id="timer-mode" class="text-lg text-gray-600">Focus Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Controls -->
+                <div class="flex justify-center space-x-4 mb-6">
+                    <button id="start-timer" onclick="startTimer()" class="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-play mr-2"></i>Start
+                    </button>
+                    <button id="pause-timer" onclick="pauseTimer()" class="px-8 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors hidden">
+                        <i class="fas fa-pause mr-2"></i>Pause
+                    </button>
+                    <button onclick="resetTimer()" class="px-8 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-stop mr-2"></i>Reset
+                    </button>
+                </div>
+
+                <!-- Timer Settings -->
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="font-medium text-gray-700">Focus</div>
+                        <div class="text-2xl font-bold text-gray-900" id="focus-time">25</div>
+                        <div class="text-gray-500">minutes</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="font-medium text-gray-700">Short Break</div>
+                        <div class="text-2xl font-bold text-gray-900" id="short-break">5</div>
+                        <div class="text-gray-500">minutes</div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <div class="font-medium text-gray-700">Long Break</div>
+                        <div class="text-2xl font-bold text-gray-900" id="long-break">15</div>
+                        <div class="text-gray-500">minutes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Stats -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4">Today's Sessions</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600" id="completed-sessions">3</div>
+                        <div class="text-sm text-gray-600">Completed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="total-focus-time">75</div>
+                        <div class="text-sm text-gray-600">Focus Minutes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-orange-600" id="break-time">20</div>
+                        <div class="text-sm text-gray-600">Break Minutes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600" id="productivity-score">85%</div>
+                        <div class="text-sm text-gray-600">Productivity</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentSection = 'dashboard';
+        let practiceSession = null;
+        let timerState = {
+            isRunning: false,
+            currentTime: 25 * 60, // 25 minutes in seconds
+            mode: 'focus', // focus, shortBreak, longBreak
+            interval: null,
+            completedSessions: 0
+        };
+
+        // Sample data
+        const sampleTopics = [
+            { name: 'Data Structures', mastery: 85, color: 'mastery-high' },
+            { name: 'Algorithms', mastery: 72, color: 'mastery-medium' },
+            { name: 'Database Design', mastery: 91, color: 'mastery-high' },
+            { name: 'Web Development', mastery: 68, color: 'mastery-medium' },
+            { name: 'Machine Learning', mastery: 45, color: 'mastery-low' },
+            { name: 'Software Engineering', mastery: 78, color: 'mastery-medium' }
+        ];
+
+        const sampleQuestions = [
+            {
+                type: 'mcq',
+                question: 'What is the time complexity of binary search?',
+                options: ['O(n)', 'O(log n)', 'O(n²)', 'O(1)'],
+                correct: 1,
+                explanation: 'Binary search divides the search space in half with each comparison.',
+                difficulty: 'medium',
+                topic: 'Algorithms'
+            },
+            {
+                type: 'flashcard',
+                question: 'What is a stack?',
+                answer: 'A Last-In-First-Out (LIFO) data structure where elements are added and removed from the same end.',
+                topic: 'Data Structures'
+            },
+            {
+                type: 'mcq',
+                question: 'Which SQL command is used to retrieve data?',
+                options: ['INSERT', 'SELECT', 'UPDATE', 'DELETE'],
+                correct: 1,
+                explanation: 'SELECT is used to query and retrieve data from database tables.',
+                difficulty: 'easy',
+                topic: 'Database Design'
+            }
+        ];
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName);
+            if (targetSection) {
+                targetSection.style.display = 'block';
+                targetSection.classList.add('active');
+                currentSection = sectionName;
+                
+                // Initialize section-specific content
+                if (sectionName === 'dashboard') {
+                    initializeDashboard();
+                } else if (sectionName === 'analytics') {
+                    initializeAnalytics();
+                }
+            }
+        }
+
+        // Dashboard initialization
+        function initializeDashboard() {
+            // Populate mastery topics
+            const masteryContainer = document.getElementById('mastery-topics');
+            masteryContainer.innerHTML = '';
+            
+            sampleTopics.forEach(topic => {
+                const topicElement = document.createElement('div');
+                topicElement.className = 'flex items-center justify-between p-3 rounded-lg ' + topic.color;
+                topicElement.innerHTML = `
+                    <span class="font-medium text-white">${topic.name}</span>
+                    <span class="text-white font-bold">${topic.mastery}%</span>
+                `;
+                masteryContainer.appendChild(topicElement);
+            });
+
+            // Populate recommendations
+            const recommendationsContainer = document.getElementById('recommendations');
+            recommendationsContainer.innerHTML = `
+                <div class="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <i class="fas fa-brain text-blue-600 mb-2"></i>
+                    <h4 class="font-semibold text-blue-900">Focus on Machine Learning</h4>
+                    <p class="text-sm text-blue-700">Your weakest topic needs attention</p>
+                    <button onclick="startPractice('adaptive')" class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium">Start Practice →</button>
+                </div>
+                <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <i class="fas fa-repeat text-green-600 mb-2"></i>
+                    <h4 class="font-semibold text-green-900">Review Data Structures</h4>
+                    <p class="text-sm text-green-700">Spaced repetition due</p>
+                    <button onclick="startPractice('flashcards')" class="mt-2 text-green-600 hover:text-green-800 text-sm font-medium">Review Now →</button>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <i class="fas fa-clock text-purple-600 mb-2"></i>
+                    <h4 class="font-semibold text-purple-900">Timed Practice</h4>
+                    <p class="text-sm text-purple-700">Improve your speed</p>
+                    <button onclick="showSection('timer')" class="mt-2 text-purple-600 hover:text-purple-800 text-sm font-medium">Start Timer →</button>
+                </div>
+            `;
+
+            // Initialize progress chart
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Mastery Score',
+                        data: [65, 68, 72, 75, 78, 76, 78],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Analytics initialization
+        function initializeAnalytics() {
+            // Performance chart
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: sampleTopics.map(t => t.name),
+                    datasets: [{
+                        label: 'Accuracy %',
+                        data: sampleTopics.map(t => t.mastery),
+                        backgroundColor: sampleTopics.map(t => 
+                            t.mastery >= 80 ? '#10b981' : 
+                            t.mastery >= 60 ? '#f59e0b' : '#ef4444'
+                        )
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Time distribution chart
+            const timeCtx = document.getElementById('timeChart').getContext('2d');
+            new Chart(timeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Study Time', 'Practice Time', 'Review Time'],
+                    datasets: [{
+                        data: [60, 25, 15],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Populate weak concepts
+            const weakConcepts = document.getElementById('weak-concepts');
+            const weakTopics = sampleTopics.filter(t => t.mastery < 70).sort((a, b) => a.mastery - b.mastery);
+            
+            weakConcepts.innerHTML = weakTopics.map(topic => `
+                <div class="flex items-center justify-between p-4 bg-red-50 rounded-lg border border-red-200">
+                    <div>
+                        <h4 class="font-semibold text-red-900">${topic.name}</h4>
+                        <p class="text-sm text-red-700">Mastery: ${topic.mastery}% - Needs improvement</p>
+                    </div>
+                    <button onclick="startPractice('adaptive')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
+                        Practice
+                    </button>
+                </div>
+            `).join('');
+
+            // Study recommendations
+            const studyRecs = document.getElementById('study-recommendations');
+            studyRecs.innerHTML = `
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <i class="fas fa-lightbulb text-blue-600 mb-1"></i>
+                    <p class="text-sm font-medium text-blue-900">Focus on fundamentals</p>
+                    <p class="text-xs text-blue-700">Review basic concepts first</p>
+                </div>
+                <div class="p-3 bg-green-50 rounded-lg">
+                    <i class="fas fa-clock text-green-600 mb-1"></i>
+                    <p class="text-sm font-medium text-green-900">Increase study time</p>
+                    <p class="text-xs text-green-700">Aim for 2+ hours daily</p>
+                </div>
+                <div class="p-3 bg-purple-50 rounded-lg">
+                    <i class="fas fa-repeat text-purple-600 mb-1"></i>
+                    <p class="text-sm font-medium text-purple-900">Regular review</p>
+                    <p class="text-xs text-purple-700">Schedule weekly reviews</p>
+                </div>
+            `;
+        }
+
+        // Practice functionality
+        function startPractice(mode) {
+            document.getElementById('practice-modes').style.display = 'none';
+            document.getElementById('practice-session').style.display = 'block';
+            
+            practiceSession = {
+                mode: mode,
+                questions: [...sampleQuestions],
+                currentQuestion: 0,
+                answers: [],
+                startTime: Date.now()
+            };
+            
+            document.getElementById('session-title').textContent = 
+                mode === 'flashcards' ? 'Flashcard Practice' :
+                mode === 'mcq' ? 'Multiple Choice Practice' : 'Adaptive Practice';
+            
+            showCurrentQuestion();
+        }
+
+        function showCurrentQuestion() {
+            const session = practiceSession;
+            const question = session.questions[session.currentQuestion];
+            
+            document.getElementById('session-progress').textContent = 
+                `Question ${session.currentQuestion + 1} of ${session.questions.length}`;
+            
+            const questionContent = document.getElementById('question-content');
+            const answerOptions = document.getElementById('answer-options');
+            
+            if (question.type === 'flashcard') {
+                questionContent.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-xl font-semibold mb-4">${question.question}</div>
+                        <button onclick="revealAnswer()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Reveal Answer
+                        </button>
+                        <div id="flashcard-answer" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                            <p class="text-gray-800">${question.answer}</p>
+                        </div>
+                    </div>
+                `;
+                answerOptions.innerHTML = '';
+            } else {
+                questionContent.innerHTML = `
+                    <div class="text-xl font-semibold mb-6">${question.question}</div>
+                `;
+                
+                answerOptions.innerHTML = question.options.map((option, index) => `
+                    <button onclick="selectAnswer(${index})" class="w-full p-4 text-left border border-gray-300 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all answer-option">
+                        <span class="font-medium">${String.fromCharCode(65 + index)}.</span> ${option}
+                    </button>
+                `).join('');
+            }
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = session.currentQuestion === 0;
+            document.getElementById('next-btn').textContent = 
+                session.currentQuestion === session.questions.length - 1 ? 'Finish' : 'Next';
+        }
+
+        function revealAnswer() {
+            document.getElementById('flashcard-answer').classList.remove('hidden');
+        }
+
+        function selectAnswer(answerIndex) {
+            // Remove previous selection
+            document.querySelectorAll('.answer-option').forEach(btn => {
+                btn.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+            
+            // Highlight selected answer
+            const selectedBtn = document.querySelectorAll('.answer-option')[answerIndex];
+            selectedBtn.classList.add('border-blue-500', 'bg-blue-50');
+            
+            // Store answer
+            practiceSession.answers[practiceSession.currentQuestion] = answerIndex;
+        }
+
+        function nextQuestion() {
+            const session = practiceSession;
+            
+            if (session.currentQuestion < session.questions.length - 1) {
+                session.currentQuestion++;
+                showCurrentQuestion();
+            } else {
+                endPractice();
+            }
+        }
+
+        function previousQuestion() {
+            const session = practiceSession;
+            
+            if (session.currentQuestion > 0) {
+                session.currentQuestion--;
+                showCurrentQuestion();
+            }
+        }
+
+        function markForReview() {
+            // Add review flag to current question
+            alert('Question marked for review!');
+        }
+
+        function endPractice() {
+            document.getElementById('practice-session').style.display = 'none';
+            document.getElementById('practice-results').style.display = 'block';
+            
+            // Calculate results
+            const session = practiceSession;
+            let correct = 0;
+            
+            session.questions.forEach((question, index) => {
+                if (question.type === 'mcq' && session.answers[index] === question.correct) {
+                    correct++;
+                }
+            });
+            
+            const total = session.questions.filter(q => q.type === 'mcq').length;
+            const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+            
+            document.getElementById('correct-answers').textContent = correct;
+            document.getElementById('incorrect-answers').textContent = total - correct;
+            document.getElementById('accuracy-score').textContent = accuracy + '%';
+        }
+
+        function reviewMistakes() {
+            alert('Review functionality would show incorrect answers with explanations');
+        }
+
+        function startNewSession() {
+            document.getElementById('practice-results').style.display = 'none';
+            document.getElementById('practice-modes').style.display = 'block';
+        }
+
+        // Timer functionality
+        function startTimer() {
+            if (!timerState.isRunning) {
+                timerState.isRunning = true;
+                document.getElementById('start-timer').classList.add('hidden');
+                document.getElementById('pause-timer').classList.remove('hidden');
+                
+                timerState.interval = setInterval(updateTimer, 1000);
+            }
+        }
+
+        function pauseTimer() {
+            if (timerState.isRunning) {
+                timerState.isRunning = false;
+                document.getElementById('start-timer').classList.remove('hidden');
+                document.getElementById('pause-timer').classList.add('hidden');
+                
+                clearInterval(timerState.interval);
+            }
+        }
+
+        function resetTimer() {
+            timerState.isRunning = false;
+            timerState.currentTime = 25 * 60;
+            timerState.mode = 'focus';
+            
+            document.getElementById('start-timer').classList.remove('hidden');
+            document.getElementById('pause-timer').classList.add('hidden');
+            
+            clearInterval(timerState.interval);
+            updateTimerDisplay();
+        }
+
+        function updateTimer() {
+            if (timerState.currentTime > 0) {
+                timerState.currentTime--;
+                updateTimerDisplay();
+            } else {
+                // Timer finished
+                timerComplete();
+            }
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timerState.currentTime / 60);
+            const seconds = timerState.currentTime % 60;
+            
+            document.getElementById('timer-display').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update progress ring
+            const totalTime = timerState.mode === 'focus' ? 25 * 60 : 
+                             timerState.mode === 'shortBreak' ? 5 * 60 : 15 * 60;
+            const progress = (totalTime - timerState.currentTime) / totalTime;
+            const circumference = 2 * Math.PI * 120;
+            const offset = circumference - (progress * circumference);
+            
+            document.getElementById('timer-progress').style.strokeDashoffset = offset;
+            
+            // Update mode display
+            document.getElementById('timer-mode').textContent = 
+                timerState.mode === 'focus' ? 'Focus Time' :
+                timerState.mode === 'shortBreak' ? 'Short Break' : 'Long Break';
+        }
+
+        function timerComplete() {
+            timerState.isRunning = false;
+            clearInterval(timerState.interval);
+            
+            // Play notification sound (would be implemented with Web Audio API)
+            alert(`${timerState.mode === 'focus' ? 'Focus session' : 'Break'} complete!`);
+            
+            // Switch modes
+            if (timerState.mode === 'focus') {
+                timerState.completedSessions++;
+                document.getElementById('completed-sessions').textContent = timerState.completedSessions;
+                
+                // Determine break type
+                timerState.mode = timerState.completedSessions % 4 === 0 ? 'longBreak' : 'shortBreak';
+                timerState.currentTime = timerState.mode === 'longBreak' ? 15 * 60 : 5 * 60;
+            } else {
+                timerState.mode = 'focus';
+                timerState.currentTime = 25 * 60;
+            }
+            
+            document.getElementById('start-timer').classList.remove('hidden');
+            document.getElementById('pause-timer').classList.add('hidden');
+            
+            updateTimerDisplay();
+        }
+
+        // File upload functionality
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        });
+
+        // Drag and drop
+        const uploadArea = document.getElementById('upload-area');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('border-blue-400', 'bg-blue-50');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('border-blue-400', 'bg-blue-50');
+            
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        });
+
+        function processFiles(files) {
+            const processingStatus = document.getElementById('processing-status');
+            const processingList = document.getElementById('processing-list');
+            
+            processingStatus.classList.remove('hidden');
+            processingList.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-file text-blue-500 mr-3"></i>
+                        <div>
+                            <p class="font-medium">${file.name}</p>
+                            <p class="text-sm text-gray-500">Processing...</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                `;
+                processingList.appendChild(item);
+                
+                // Simulate processing
+                setTimeout(() => {
+                    item.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-file text-green-500 mr-3"></i>
+                            <div>
+                                <p class="font-medium">${file.name}</p>
+                                <p class="text-sm text-gray-500">Processed - ${Math.floor(Math.random() * 50) + 10} concepts extracted</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check text-green-500"></i>
+                        </div>
+                    `;
+                }, (index + 1) * 2000);
+            });
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('dashboard');
+            updateTimerDisplay();
+        });
+
+        // Add CSS for sections
+        const style = document.createElement('style');
+        style.textContent = `
+            .section { display: none; }
+            .section.active { display: block; }
+        `;
+        document.head.appendChild(style);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97e5c0f281239f4d',t:'MTc1Nzc0NjY4MS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
